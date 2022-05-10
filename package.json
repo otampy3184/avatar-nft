@@ -9,7 +9,9 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.6.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@truffle/hdwallet-provider": "^2.0.8"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
