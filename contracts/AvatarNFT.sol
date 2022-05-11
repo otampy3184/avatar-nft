@@ -17,7 +17,7 @@ contract AvatarNFT is ERC721, Ownable {
 
     // Metadata格納場所のURI
     function _baseURI() internal pure override returns (string memory) {
-        return "https://github.com/otampy3184/metadata-okuyo/tree/main/meta";
+        return "https://raw.githubusercontent.com/otampy3184/metadata-okuyo/main/meta/";
     }
     
     // みんと
