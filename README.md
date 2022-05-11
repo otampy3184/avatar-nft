@@ -1,11 +1,165 @@
-# My very first original NFT
+# NFT mint tutorial
+Redditの自作アバターをOpensea上にMintする
 
-let's mint my cutest reddit avatar on public test-network
+# 環境
+Windows 10 Home
+Solidity 0.8.0
+Node.js v14.15.4
+npm v6.14.10
+Truffle v5.5.13
+Truffle HDWalletProvider v2.0.8
+Openzeppelin Contract v4.6.0
 
-## how things are going
-1. create enviroment and contract
+# 事前準備
+1. InfraでEthereumに接続するAPIを用意する
+2. Metamaskに登録し、Rinkebyのテストネットワークに接続しておく
+3. Metamaskで用意したRinkebyのアドレスに対して、FaucetからETHを送っておく
+4. Node.jsをインストールする
 
-2. compile, deploy and mint(see below)
+# 手順
+## 環境整備
+truffleはEVM開発用のフレームワークで、Solidityのコンパイルからデプロイ、テストまでが簡単に実行できるツー
+npmでインストールする
+```
+$ npm install -g truffle
+```
+
+truffleを使ってSolidityプロジェクトのひな形を作成する
+```
+$ truffle init 
+```
+
+Ethereumとの接続にはHDWallet Providerと呼ばれるパッケージを用いる。同じくnpmでインストールする
+```
+$ npm install @truffle/hdwallet-provider
+```
+
+ERC規格に沿ったコントラクトのひな形としてOpenzeppelinというコントラクト群を使う。npmでインストールする
+```
+$ npm install @openzeppelin/contracts
+```
+
+EthereumのRinkebyネットワークに接続するためにtruffle-config.jsを編集する
+```javascript: truffle-config.js
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+
+// .secretにはMetamaskのMnemonicを配置する
+const fs = require('fs');
+const mnemonic = fs.readFileSync(".secret").toString().trim();
+
+module.exports = {
+  networks: {
+    rinkeby: {
+      // HDWalletProviderに渡す第二引数には、Infraで作成したRinkeby用のAPIへのリンクを渡す
+      provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/9294406b354849b49052ee5d130fac9a`),
+      network_id: 4,       
+      gas: 5500000,        
+      confirmations: 2,    
+      timeoutBlocks: 200,  
+      skipDryRun: true    
+      },
+  },
+
+  mocha: {
+  },
+  compilers: {
+    solc: {
+      // Openzeppelinでは0.8.0以上のコントラクトが最新であるため、0.8.0以上にする
+      version: "0.8.0",     
+    }
+  },
+};
+```
+
+この状態で一度truffle consoleを試し、問題なく接続できたら環境はOK
+以下は成功例
+```
+$ truffle console --network rinkeby
+truffle(rinkeby)>
+```
+
+接続に成功したら一旦truffle consoleから抜ける  
+Ctrl + C を2回入力すると抜けることができる
+
+## デプロイ用のERC721コントラクトを作成し、コンパイルする
+最低限トークンのMintまでできるコントラクトを作成する
+```javascript: AvatarNFT.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+// openzeppelinのコントラクトをimport
+import "../node_modules/@openzeppelin/contracts/token/erc721/ERC721.sol";
+import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
+import "../node_modules/@openzeppelin/contracts/utils/Counters.sol";
+
+contract AvatarNFT is ERC721, Ownable {
+    // tokenIdを順に設定していくためにCoounterライブラリを利用
+    using Counters for Counters.Counter;
+
+    // tokenのNameとSymbolを設定
+    constructor() ERC721("Avatar", "AVT"){}
+
+    // Counterライブラリを使って_tokenIdCounterを定義
+    Counters.Counter private _tokenIdCounter;
+
+    // Metadata格納場所の元となるbaseURIを設定
+    function _baseURI() internal pure override returns (string memory) {
+        return "https://raw.githubusercontent.com/otampy3184/metadata-okuyo/main/meta/";
+    }
+    
+    // Mint機能
+    function safeMint(address to) public onlyOwner {
+        uint256 tokenId = _tokenIdCounter.current();
+        // 初回increment後のtokenIdは0
+        _tokenIdCounter.increment();
+        // 親コントラクトからMint機能を呼び出し
+        _safeMint(to, tokenId);
+    }
+}
+```
+
+作成したコントラクトをコンパイルする
+```
+$ truffle compile
+```
+成功した場合はbuildフォルダができて、中にコントラクトのABI情報の入ったjsonファイルが生成される
+
+## コントラクトのmigrate
+コントラクトをEthereum上にMigrateするため、Migrationファイルを作成する
+truffle initしたことによってmigrationsフォルダができているため、ファルダの下に新規でMigrationファイルを作成する
+```javascript: 2_avatar.js
+// requireに入れるのはコントラクトのファイル名ではなく、中で実装しているコントラクト名である点に注意
+const AvatarNFT = artifacts.require("AvatarNFT");
+
+module.exports = function (deployer) {
+  deployer.deploy(AvatarNFT);
+};
+```
+
+migrationファイルを使ってコントラクトを実際にmigrateする　　
+```
+$ truffle migrate --network rinkeby
+```
+
+migrateしたコントラクトを操作し、トークンをMintする
+truffle console上ではWeb3.jsを使ってコントラクトと繋がるため、javascript形式で指示を入力する
+```
+$ truffle console --network rinkeby
+truffle(rinkeby)> const AvatarContract = await AvatarNFT.deployed()
+undifined
+truffle(rinkeby)> AvatarContract.address
+"<migrateしたコントラクトのアドレスが表示される>"
+truffle(rinkeby)> AvatarContract.safeMint("<MetamaskのRinkeby側のアドレス>")
+~~~
+<Txのreceiptが表示される>
+~~~
+```
+
+## Opensea上でNFTを確認する
+トークンのミントが成功していた場合、Opensea上からNFTを確認することができる  
+URLはhttps://testnets.opensea.io/assets/<migrateしたコントラクトのアドレス>/0
+
+## 【補足】migrate以降の実行例 
 ```
 Hiroshi Takagi@DESKTOP-PN1Q84A MINGW64 ~/MyProject/dapp/a
 $ truffle migration --network rinkeby --reset
@@ -110,6 +264,3 @@ truffle(rinkeby)> avatar.safeMint("0x52149c8A1152Df63517994adECfc00A8098444B2")
 }
 truffle(rinkeby)>
 ```
-
-[check my NFT on Opensea](https://testnets.opensea.io/assets/0xBCf664A8E5023Ceb4BEA8a4116e3682D167142F7/0)
-note: because of remigrationg, contract address is different from previous one.
