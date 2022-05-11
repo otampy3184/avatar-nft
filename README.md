@@ -2,7 +2,7 @@
 
 let's mint my cutest reddit avatar on public test-network
 
-## how things going
+## how things are going
 1. create enviroment and contract
 
 2. compile, deploy and mint(see below)
@@ -111,4 +111,5 @@ truffle(rinkeby)> avatar.safeMint("0x52149c8A1152Df63517994adECfc00A8098444B2")
 truffle(rinkeby)>
 ```
 
-(check my NFT on Opensea)[https://testnets.opensea.io/assets/0xBCf664A8E5023Ceb4BEA8a4116e3682D167142F7/0]
+[check my NFT on Opensea](https://testnets.opensea.io/assets/0xBCf664A8E5023Ceb4BEA8a4116e3682D167142F7/0)
+note: because of remigrationg, contract address is different from previous one.
