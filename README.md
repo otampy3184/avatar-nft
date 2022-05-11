@@ -40,7 +40,7 @@ $ npm install @openzeppelin/contracts
 ```
 
 EthereumのRinkebyネットワークに接続するためにtruffle-config.jsを編集する
-```javascript: truffle-config.js
+```javascript:truffle-config.js
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 
 // .secretにはMetamaskのMnemonicを配置する
@@ -83,7 +83,7 @@ Ctrl + C を2回入力すると抜けることができる
 
 ## デプロイ用のERC721コントラクトを作成し、コンパイルする
 最低限トークンのMintまでできるコントラクトを作成する
-```javascript: AvatarNFT.sol
+```javascript:AvatarNFT.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -127,7 +127,7 @@ $ truffle compile
 ## コントラクトのmigrate
 コントラクトをEthereum上にMigrateするため、Migrationファイルを作成する
 truffle initしたことによってmigrationsフォルダができているため、ファルダの下に新規でMigrationファイルを作成する
-```javascript: 2_avatar.js
+```javascript:2_avatar.js
 // requireに入れるのはコントラクトのファイル名ではなく、中で実装しているコントラクト名である点に注意
 const AvatarNFT = artifacts.require("AvatarNFT");
 
